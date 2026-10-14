@@ -1,0 +1,44 @@
+services:
+  database:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: newtibet
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?Set DATABASE_PASSWORD}
+      POSTGRES_DB: newtibet
+    volumes: [database:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U newtibet"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  migrate:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.api
+    env_file: apps/api/.env
+    environment:
+      DATABASE_URL: postgresql://newtibet:${DATABASE_PASSWORD}@database:5432/newtibet
+    command: [node, migrate.mjs]
+    depends_on:
+      database:
+        condition: service_healthy
+  api:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.api
+    env_file: apps/api/.env
+    environment:
+      DATABASE_URL: postgresql://newtibet:${DATABASE_PASSWORD}@database:5432/newtibet
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+  admin:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.admin
+    ports: ["127.0.0.1:8080:80"]
+    depends_on: [api]
+    restart: unless-stopped
+volumes:
+  database:

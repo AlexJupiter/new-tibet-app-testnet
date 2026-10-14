@@ -1,0 +1,20 @@
+import {describe,it,expect,beforeAll} from 'vitest';
+import {createVM} from '@ethereumjs/vm';
+import {createAddressFromString,hexToBytes} from '@ethereumjs/util';
+import {encodeDeployData,encodeFunctionData,type Hex} from 'viem';
+import {ADMIN_ADDRESS,EAS_ADDRESS,ZERO_UID,encodeIdentity} from '../packages/protocol';
+import artifact from '../packages/protocol/generated/resolver.json';
+import {expectedResolverRuntime} from '../packages/protocol/resolver';
+describe('Resolver on an EVM',()=>{
+ let vm:Awaited<ReturnType<typeof createVM>>,address:any;
+ const reference=('0x'+'1'.repeat(64)) as Hex;
+ const valid={uid:reference,schema:reference,time:0n,expirationTime:10000000000n,revocationTime:0n,refUID:ZERO_UID,recipient:'0x4444444444444444444444444444444444444444',attester:ADMIN_ADDRESS,revocable:true,data:encodeIdentity(reference)};
+ beforeAll(async()=>{vm=await createVM();const result=await vm.evm.runCall({caller:createAddressFromString(ADMIN_ADDRESS),data:hexToBytes(encodeDeployData({abi:artifact.abi,bytecode:artifact.bytecode as Hex,args:[EAS_ADDRESS,ADMIN_ADDRESS]})),gasLimit:10000000n});expect(result.execResult.exceptionError).toBeUndefined();address=result.createdAddress;expect(address).toBeTruthy();});
+ const call=(caller:string,change={},fn='attest')=>vm.evm.runCall({caller:createAddressFromString(caller),to:address,data:hexToBytes(encodeFunctionData({abi:artifact.abi,functionName:fn,args:[{...valid,...change},0n]})),gasLimit:1000000n});
+ it('matches the exact runtime bytecode trusted by the API',async()=>{const {bytesToHex}=await import('@ethereumjs/util');expect(bytesToHex(await vm.stateManager.getCode(address)).toLowerCase()).toBe(expectedResolverRuntime().toLowerCase());});
+ it('accepts a valid attestation dispatched by EAS',async()=>expect((await call(EAS_ADDRESS)).execResult.exceptionError).toBeUndefined());
+ it('rejects a direct call even from the administrator',async()=>expect((await call(ADMIN_ADDRESS)).execResult.exceptionError).toBeTruthy());
+ it('rejects attestations issued by another wallet',async()=>expect((await call(EAS_ADDRESS,{attester:valid.recipient})).execResult.exceptionError).toBeTruthy());
+ it('rejects non-revocable and non-expiring identities',async()=>{expect((await call(EAS_ADDRESS,{revocable:false})).execResult.exceptionError).toBeTruthy();expect((await call(EAS_ADDRESS,{expirationTime:0n})).execResult.exceptionError).toBeTruthy();});
+ it('allows EAS to revoke only administrator attestations',async()=>{expect((await call(EAS_ADDRESS,{},'revoke')).execResult.exceptionError).toBeUndefined();expect((await call(EAS_ADDRESS,{attester:valid.recipient},'revoke')).execResult.exceptionError).toBeTruthy();});
+});
