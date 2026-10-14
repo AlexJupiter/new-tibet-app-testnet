@@ -1,13 +1,7 @@
+import { showDialog } from "../../src/dialogs";
 import { useEffect, useState } from "react";
-import {
-  Text,
-  TextInput,
-  Alert,
-  Linking,
-  RefreshControl,
-  View,
-} from "react-native";
-import { usePrivy, useEmbeddedEthereumWallet } from "@privy-io/expo";
+import { Text, TextInput, Linking, RefreshControl, View } from "react-native";
+import { usePrivy, useEmbeddedEthereumWallet } from "../../src/auth";
 import {
   createPublicClient,
   http,
@@ -114,7 +108,7 @@ export default function Wallet() {
       setError("Enter a valid recipient and ETH amount.");
       return;
     }
-    Alert.alert(
+    showDialog(
       "Confirm Sepolia transfer",
       `Send ${amount} test ETH to ${to}? Network gas fees apply.`,
       [
@@ -162,7 +156,7 @@ export default function Wallet() {
             disabled={!wallet}
             onPress={() =>
               void Clipboard.setStringAsync(wallet!.address).then(() =>
-                Alert.alert("Address copied"),
+                showDialog("Address copied"),
               )
             }
           />

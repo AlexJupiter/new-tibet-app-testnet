@@ -42,6 +42,7 @@ describe.skipIf(!url)("API with PostgreSQL and signed access tokens", () => {
     PRIVY_APP_ID: "app-test",
     PRIVY_APP_SECRET: "not-a-real-secret",
     DATA_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString("base64"),
+    MEMBER_WEB_ORIGINS: "https://alexjupiter.github.io",
   });
   const headers = { cookie: `nt_admin=${token}`, origin, "x-csrf-token": csrf };
   const accessToken = (changes: any = {}) =>
@@ -130,6 +131,34 @@ describe.skipIf(!url)("API with PostgreSQL and signed access tokens", () => {
         })
       ).statusCode,
     ).toBe(403);
+  });
+  it("allows browser profile edits and deletion in CORS preflights", async () => {
+    const browser = "https://alexjupiter.github.io";
+    const response = await app.inject({
+      method: "OPTIONS",
+      url: "/api/me/profile",
+      headers: {
+        origin: browser,
+        "access-control-request-method": "PUT",
+        "access-control-request-headers": "authorization,content-type",
+      },
+    });
+    expect(response.statusCode).toBe(204);
+    expect(response.headers["access-control-allow-origin"]).toBe(browser);
+    expect(response.headers["access-control-allow-methods"]).toContain("PUT");
+    expect(response.headers["access-control-allow-methods"]).toContain(
+      "DELETE",
+    );
+  });
+  it("never exposes an admin session to the member website origin", async () => {
+    const response = await app.inject({
+      url: "/api/admin/session",
+      headers: {
+        cookie: headers.cookie,
+        origin: "https://alexjupiter.github.io",
+      },
+    });
+    expect(response.statusCode).toBe(403);
   });
   it("rejects a forged admin signature and consumes its nonce", async () => {
     const n = await app.inject({

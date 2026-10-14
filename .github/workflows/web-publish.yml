@@ -1,0 +1,27 @@
+name: Publish member website
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: member-website
+    env:
+      EXPO_WEB_BASE_URL: /new-tibet-app-testnet-pages
+      EXPO_PUBLIC_PRIVY_APP_ID: ${{ vars.PRIVY_APP_ID }}
+      EXPO_PUBLIC_PRIVY_WEB_CLIENT_ID: ${{ vars.PRIVY_WEB_CLIENT_ID }}
+      EXPO_PUBLIC_API_URL: ${{ vars.API_URL }}
+      EXPO_PUBLIC_SEPOLIA_RPC_URL: ${{ vars.SEPOLIA_RPC_URL }}
+      GH_TOKEN: ${{ secrets.PAGES_DEPLOY_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run web:build
+      - name: Publish compiled files
+        run: npm run web:publish

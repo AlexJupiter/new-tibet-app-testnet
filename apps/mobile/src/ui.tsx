@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
+  Platform,
   type ViewStyle,
   type RefreshControlProps,
 } from "react-native";
@@ -34,7 +35,7 @@ export function Screen({
       <ScrollView
         contentContainerStyle={s.page}
         keyboardShouldPersistTaps="handled"
-        refreshControl={refreshControl}
+        refreshControl={Platform.OS === "web" ? undefined : refreshControl}
       >
         <View style={s.header}>
           <Text style={s.kicker}>{kicker}</Text>
@@ -43,6 +44,14 @@ export function Screen({
         <Text accessibilityRole="header" style={s.title}>
           {title}
         </Text>
+        {Platform.OS === "web" && refreshControl && (
+          <Button
+            title={refreshControl.props.refreshing ? "Refreshing…" : "Refresh"}
+            secondary
+            disabled={refreshControl.props.refreshing}
+            onPress={() => refreshControl.props.onRefresh?.()}
+          />
+        )}
         {children}
       </ScrollView>
     </SafeAreaView>
@@ -105,7 +114,13 @@ export function Loading() {
 }
 export const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
-  page: { padding: 24, paddingBottom: 40 },
+  page: {
+    padding: 24,
+    paddingBottom: 40,
+    ...(Platform.OS === "web"
+      ? { width: "100%" as const, maxWidth: 620, alignSelf: "center" as const }
+      : {}),
+  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",

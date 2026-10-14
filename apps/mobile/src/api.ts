@@ -1,7 +1,7 @@
-import { usePrivyClient } from "@privy-io/expo";
+import { useAccessToken } from "./auth";
 import { useCallback } from "react";
 export function useApi() {
-  const privy = usePrivyClient();
+  const getAccessToken = useAccessToken();
   return useCallback(
     async <T = any>(
       path: string,
@@ -10,10 +10,11 @@ export function useApi() {
     ): Promise<T> => {
       const base = process.env.EXPO_PUBLIC_API_URL;
       if (!base) throw new Error("The member API is not configured.");
-      const token = await privy.getAccessToken();
+      const token = await getAccessToken();
       if (!token) throw new Error("Please sign in again.");
       const response = await fetch(`${base.replace(/\/$/, "")}/api${path}`, {
         method,
+        credentials: "omit",
         headers: {
           Authorization: `Bearer ${token}`,
           ...(body ? { "Content-Type": "application/json" } : {}),
@@ -26,6 +27,6 @@ export function useApi() {
         throw new Error(data.error ?? "Unable to complete request.");
       return data;
     },
-    [privy],
+    [getAccessToken],
   );
 }

@@ -1,22 +1,20 @@
-import { useEffect, useState } from "react";
+import { showDialog } from "../../src/dialogs";
+import { useEffect, useState, useRef } from "react";
 import {
   Text,
   TextInput,
   View,
-  Alert,
   Linking,
   RefreshControl,
   Image,
   Switch,
 } from "react-native";
-import { usePrivy } from "@privy-io/expo";
-import * as ImagePicker from "expo-image-picker";
-import { File } from "expo-file-system";
+import { usePrivy } from "../../src/auth";
+import { pickEvidence, releaseEvidence } from "../../src/media";
+import { EVIDENCE_KINDS as kinds, type Evidence } from "../../src/evidence";
 import { useApi } from "../../src/api";
 import { useMember } from "../../src/member";
 import { Screen, Card, Button, Notice, s, colors } from "../../src/ui";
-type Evidence = { kind: string; mime: string; base64: string; uri: string };
-const kinds = ["front", "back", "identity", "challenge", "video"] as const;
 export default function Profile() {
   const api = useApi();
   const { member, error, loading, refresh } = useMember(),
@@ -51,30 +49,31 @@ export default function Profile() {
       setBusy(false);
     }
   };
+  const previousFiles = useRef<Evidence[]>([]);
+  const mounted = useRef(true);
+  useEffect(() => {
+    releaseEvidence(
+      previousFiles.current.filter(
+        (old) => !files.some((file) => file.uri === old.uri),
+      ),
+    );
+    previousFiles.current = files;
+  }, [files]);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      releaseEvidence(previousFiles.current);
+    };
+  }, []);
   const pick = async (kind: string) => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted)
-      throw new Error("Allow photo library access to choose your evidence.");
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: kind === "video" ? ["videos"] : ["images"],
-      quality: 0.75,
-      videoMaxDuration: 30,
-      base64: kind !== "video",
-    });
-    if (result.canceled) return;
-    const asset = result.assets[0];
-    if ((asset.fileSize ?? 0) > (kind === "video" ? 10_000_000 : 2_000_000))
-      throw new Error("Choose a photo under 2 MB or a video under 10 MB.");
-    if (kind === "video" && (asset.duration ?? 0) > 30000)
-      throw new Error("Choose a video no longer than 30 seconds.");
-    const base64 = asset.base64 ?? (await new File(asset.uri).base64());
-    const mime = asset.base64
-      ? "image/jpeg"
-      : asset.mimeType || (kind === "video" ? "video/mp4" : "image/jpeg");
-    setFiles((current) => [
-      ...current.filter((f) => f.kind !== kind),
-      { kind, mime, base64, uri: asset.uri },
-    ]);
+    const file = await pickEvidence(kind);
+    if (!file) return;
+    if (!mounted.current) {
+      releaseEvidence([file]);
+      return;
+    }
+    setFiles((current) => [...current.filter((f) => f.kind !== kind), file]);
   };
   const active =
     member?.verification?.status === "pending" ||
@@ -155,7 +154,7 @@ export default function Profile() {
                 book,
               });
               await refresh();
-              Alert.alert("Profile saved");
+              showDialog("Profile saved");
             })
           }
         />
@@ -247,7 +246,7 @@ export default function Profile() {
                     setChallenge("");
                     setConsent(false);
                     await refresh();
-                    Alert.alert(
+                    showDialog(
                       "Application submitted",
                       "Your review status will appear here.",
                     );
@@ -286,7 +285,7 @@ export default function Profile() {
         title="Delete New Tibet profile"
         disabled={busy || !member}
         onPress={() =>
-          Alert.alert(
+          showDialog(
             "Delete your profile?",
             "Your New Tibet profile and evidence will be deleted. Your wallet account and public blockchain records remain.",
             [

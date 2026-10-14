@@ -1,13 +1,15 @@
 # New Tibet · Sepolia app
 
-Native iOS and Android app based on [AlexJupiter/new-tibet-app](https://github.com/AlexJupiter/new-tibet-app), plus a wallet-authenticated administrator website and PostgreSQL API. The mobile app contains exactly **Profile, Wallet, and Announcements**.
+Shared iOS, Android, and browser app based on [AlexJupiter/new-tibet-app](https://github.com/AlexJupiter/new-tibet-app), plus a wallet-authenticated administrator website and PostgreSQL API. All three platforms use the same **Profile, Wallet, and Announcements** screens.
 
-This repository implements the real integrations and release configuration. It is a **Sepolia-only application**, with no simulated wallet balance, rewards, or verification. It has not been deployed or signed for distribution: Privy, Expo/EAS, Apple/Google signing, a domain, and hosting must be configured first. See [deployment instructions](docs/DEPLOYMENT.md) and [verification results](docs/VALIDATION.md).
+Member website: [GitHub Pages](https://alexjupiter.github.io/new-tibet-app-testnet-pages/). Account actions are enabled after the deferred Privy/API configuration. The public hosting repository contains compiled website files only; application and backend source remain here. See [website setup](docs/WEB.md).
+
+This repository implements the real integrations and release configuration. It is a **Sepolia-only application**, with no simulated wallet balance, rewards, or verification. The member frontend is published on GitHub Pages. Privy, API/admin hosting, native signing, and passkey domain associations must be configured before live account use and native distribution. See [deployment instructions](docs/DEPLOYMENT.md) and [verification results](docs/VALIDATION.md).
 
 ## Included
 
 - Profile: pseudonym/display name, membership book, encrypted book photos and challenge video, review status, public attestation link, and deletion of New Tibet profile data.
-- Wallet: Privy embedded Ethereum wallet, native passkey signup/login, real Sepolia balance, receive address/QR, and confirmed ETH transfers with a recipient/amount confirmation.
+- Wallet: Privy embedded Ethereum wallet, passkey signup/login on all three platforms, real Sepolia balance, receive address/QR, and confirmed ETH transfers with a recipient/amount confirmation.
 - Announcements: persisted admin-authored messages and per-member read receipts.
 - Admin desk: Sign-In with Ethereum restricted to **0x71AF09966CBED4434ccA97c40Fa38B8083548B95**, private evidence review, schema/resolver initialization, onchain identity issuance/revocation, rejection notes, and announcement publishing.
 - Backend: verified Privy JWTs and server-side wallet ownership lookup, PostgreSQL persistence, authenticated AES-256-GCM encryption, CSRF protection, rate limiting, one-use SIWE challenges, audit records, and 60-day evidence deletion.
@@ -17,7 +19,7 @@ There are no ecosystem, chat, rewards, invitations, mesh, petition, swap, or oth
 ## Structure
 
 ```text
-apps/mobile/           Expo / React Native / Expo Router
+apps/mobile/           Shared Expo / React Native / browser screens and adapters
 apps/admin/            React / Vite administrator website
 apps/api/              Fastify API / PostgreSQL migrations
 packages/protocol/     Sepolia addresses, EAS ABI, shared trust rules
@@ -62,6 +64,7 @@ npm run typecheck
 TEST_DATABASE_URL=postgresql://user:password@localhost/newtibet_test npm test
 npm run build
 npm run mobile:export
+EXPO_WEB_BASE_URL=/new-tibet-app-testnet-pages npm run web:build
 ```
 
 The database integration suite requires a dedicated database name ending in `_test` and truncates its tables. Without `TEST_DATABASE_URL`, that suite is explicitly skipped. CI provides PostgreSQL and runs it.

@@ -1,28 +1,22 @@
 import { useState } from "react";
 import { Text, View } from "react-native";
-import { usePrivy } from "@privy-io/expo";
-import {
-  useLoginWithPasskey,
-  useSignupWithPasskey,
-} from "@privy-io/expo/passkey";
+import { usePrivy, usePasskeys } from "../src/auth";
 import { Redirect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Screen, Card, Button, Notice, Loading, s, colors } from "../src/ui";
 export default function SignIn() {
   const { isReady, user } = usePrivy(),
-    { loginWithPasskey } = useLoginWithPasskey(),
-    { signupWithPasskey } = useSignupWithPasskey();
+    { login, signup } = usePasskeys();
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   if (!isReady) return <Loading />;
   if (user) return <Redirect href="/(tabs)/profile" />;
-  const authenticate = async (signup: boolean) => {
+  const authenticate = async (create: boolean) => {
     setBusy(true);
     setError("");
     try {
-      const relyingParty = `https://${process.env.EXPO_PUBLIC_PASSKEY_DOMAIN}`;
-      if (signup) await signupWithPasskey({ relyingParty });
-      else await loginWithPasskey({ relyingParty });
+      if (create) await signup();
+      else await login();
     } catch (e) {
       setError((e as Error).message);
     } finally {

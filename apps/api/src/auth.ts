@@ -52,6 +52,8 @@ export function auth(config: Config, pool: Pool) {
         throw new HttpError(403, "Origin not allowed");
     },
     async admin(req: FastifyRequest, mutation = false) {
+      if (req.headers.origin && req.headers.origin !== config.ADMIN_ORIGIN)
+        throw new HttpError(403, "Administrator origin not allowed");
       const token = req.cookies.nt_admin;
       if (!token) throw new HttpError(401, "Administrator login required");
       const { rows } = await pool.query(

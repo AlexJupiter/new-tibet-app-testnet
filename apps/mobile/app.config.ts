@@ -9,6 +9,14 @@ const config: ExpoConfig = {
   orientation: "portrait",
   userInterfaceStyle: "light",
   icon: "./assets/icon.png",
+  platforms: ["ios", "android", "web"],
+  web: {
+    bundler: "metro",
+    output: "single",
+    name: "New Tibet",
+    favicon: "./assets/icon.png",
+  },
+  experiments: { baseUrl: process.env.EXPO_WEB_BASE_URL || "" },
   ios: {
     bundleIdentifier: "com.newtibet.testnet",
     supportsTablet: true,

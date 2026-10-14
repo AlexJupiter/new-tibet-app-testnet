@@ -51,9 +51,15 @@ export async function buildServer(config: Config, pool: Pool) {
   });
   await app.register(helmet);
   await app.register(cors, {
-    origin: config.ADMIN_ORIGIN,
+    origin: [
+      config.ADMIN_ORIGIN,
+      ...config.MEMBER_WEB_ORIGINS.split(",")
+        .map((v) => v.trim())
+        .filter(Boolean),
+    ],
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization", "X-CSRF-Token"],
+    methods: ["GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS"],
   });
   await app.register(cookie);
   await app.register(rateLimit, { max: 120, timeWindow: "1 minute" });
@@ -123,33 +129,27 @@ export async function buildServer(config: Config, pool: Pool) {
   };
   app.setErrorHandler((error, req, reply) => {
     if (error instanceof z.ZodError)
-      return reply
-        .code(400)
-        .send({
-          error: "Invalid input",
-          details: error.issues.map((i) => ({
-            path: i.path,
-            message: i.message,
-          })),
-        });
+      return reply.code(400).send({
+        error: "Invalid input",
+        details: error.issues.map((i) => ({
+          path: i.path,
+          message: i.message,
+        })),
+      });
     if ((error as any).code === "23505")
-      return reply
-        .code(409)
-        .send({
-          error:
-            "This action has already been recorded or a verification is already active",
-        });
+      return reply.code(409).send({
+        error:
+          "This action has already been recorded or a verification is already active",
+      });
     const status = (error as any).statusCode ?? 500;
     if (status >= 500)
       req.log.error({ message: (error as Error).message }, "Request failed");
-    return reply
-      .code(status)
-      .send({
-        error:
-          status >= 500
-            ? "Service temporarily unavailable"
-            : (error as Error).message,
-      });
+    return reply.code(status).send({
+      error:
+        status >= 500
+          ? "Service temporarily unavailable"
+          : (error as Error).message,
+    });
   });
   app.get("/api/health", async () => {
     await pool.query("SELECT 1");

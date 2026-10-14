@@ -19,7 +19,9 @@
     "db:migrate": "npm run migrate -w apps/api",
     "contracts:compile": "tsx scripts/compile-contract.ts",
     "mobile:export": "npm run export -w apps/mobile",
-    "release:check": "tsx scripts/release-check.ts"
+    "release:check": "tsx scripts/release-check.ts",
+    "web:build": "npm run export:web -w apps/mobile && node --import tsx scripts/prepare-pages.ts",
+    "web:publish": "node scripts/publish-pages.mjs"
   },
   "dependencies": {
     "viem": "2.57.5",
@@ -43,7 +45,8 @@
     "tmp": "0.2.7",
     "decode-uri-component": "$decode-uri-component",
     "uuid": "11.1.1",
-    "sharp": "0.35.5"
+    "sharp": "0.35.5",
+    "ws@>=8.0.0 <8.22.0": "8.22.0"
   },
-  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+  "packageManager": "npm@10.9.2"
 }

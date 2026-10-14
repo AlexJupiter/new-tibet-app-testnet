@@ -1,5 +1,5 @@
 import { Tabs, Redirect } from "expo-router";
-import { AuthBoundary } from "@privy-io/expo";
+import { AuthBoundary } from "../../src/auth";
 import { Ionicons } from "@expo/vector-icons";
 import { MemberProvider } from "../../src/member";
 import { Loading, Screen, Notice, colors } from "../../src/ui";
