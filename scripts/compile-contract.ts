@@ -1,12 +1,54 @@
-import solc from 'solc';
-import {readFile,mkdir,writeFile} from 'node:fs/promises';
-const source=await readFile('contracts/AdminIdentityResolver.sol','utf8');
-const input={language:'Solidity',sources:{'AdminIdentityResolver.sol':{content:source}},settings:{optimizer:{enabled:true,runs:200},evmVersion:'paris',outputSelection:{'*':{'*':['abi','evm.bytecode.object','evm.deployedBytecode.object','evm.deployedBytecode.immutableReferences'],'':['ast']}}}};
-const output=JSON.parse(solc.compile(JSON.stringify(input)));
-if(output.errors?.some((e:any)=>e.severity==='error'))throw new Error(output.errors.map((e:any)=>e.formattedMessage).join('\n'));
-const c=output.contracts['AdminIdentityResolver.sol'].AdminIdentityResolver;
-await mkdir('packages/protocol/generated',{recursive:true});
-const declarations=output.sources['AdminIdentityResolver.sol'].ast.nodes.find((n:any)=>n.nodeType==='ContractDefinition').nodes.filter((n:any)=>n.nodeType==='VariableDeclaration'&&n.mutability==='immutable');
-const immutableReferences=Object.fromEntries(declarations.map((n:any)=>[n.name,c.evm.deployedBytecode.immutableReferences[n.id]]));
-await writeFile('packages/protocol/generated/resolver.json',JSON.stringify({compiler:solc.version(),abi:c.abi,bytecode:'0x'+c.evm.bytecode.object,runtime:'0x'+c.evm.deployedBytecode.object,immutableReferences},null,2)+'\n');
-console.log('Compiled AdminIdentityResolver');
+import solc from "solc";
+import { readFile, mkdir, writeFile } from "node:fs/promises";
+const source = await readFile("contracts/AdminIdentityResolver.sol", "utf8");
+const input = {
+  language: "Solidity",
+  sources: { "AdminIdentityResolver.sol": { content: source } },
+  settings: {
+    optimizer: { enabled: true, runs: 200 },
+    evmVersion: "paris",
+    outputSelection: {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode.object",
+          "evm.deployedBytecode.object",
+          "evm.deployedBytecode.immutableReferences",
+        ],
+        "": ["ast"],
+      },
+    },
+  },
+};
+const output = JSON.parse(solc.compile(JSON.stringify(input)));
+if (output.errors?.some((e: any) => e.severity === "error"))
+  throw new Error(output.errors.map((e: any) => e.formattedMessage).join("\n"));
+const c = output.contracts["AdminIdentityResolver.sol"].AdminIdentityResolver;
+await mkdir("packages/protocol/generated", { recursive: true });
+const declarations = output.sources["AdminIdentityResolver.sol"].ast.nodes
+  .find((n: any) => n.nodeType === "ContractDefinition")
+  .nodes.filter(
+    (n: any) =>
+      n.nodeType === "VariableDeclaration" && n.mutability === "immutable",
+  );
+const immutableReferences = Object.fromEntries(
+  declarations.map((n: any) => [
+    n.name,
+    c.evm.deployedBytecode.immutableReferences[n.id],
+  ]),
+);
+await writeFile(
+  "packages/protocol/generated/resolver.json",
+  JSON.stringify(
+    {
+      compiler: solc.version(),
+      abi: c.abi,
+      bytecode: "0x" + c.evm.bytecode.object,
+      runtime: "0x" + c.evm.deployedBytecode.object,
+      immutableReferences,
+    },
+    null,
+    2,
+  ) + "\n",
+);
+console.log("Compiled AdminIdentityResolver");

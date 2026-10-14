@@ -1,0 +1,6 @@
+**/node_modules/**
+**/dist/**
+**/ios/**
+**/android/**
+**/.expo/**
+packages/protocol/generated/resolver.json

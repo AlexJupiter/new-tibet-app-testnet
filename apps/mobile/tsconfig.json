@@ -1,1 +1,11 @@
-{"extends":"expo/tsconfig.base","compilerOptions":{"strict":true,"moduleResolution":"Bundler"},"include":["**/*.ts","**/*.tsx","../../packages/protocol/**/*.ts",".expo/types/**/*.ts","expo-env.d.ts"]}
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": { "strict": true, "moduleResolution": "Bundler" },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "../../packages/protocol/**/*.ts",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
+  ]
+}

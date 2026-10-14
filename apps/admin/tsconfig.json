@@ -1,1 +1,9 @@
-{"extends":"../../tsconfig.json","compilerOptions":{"jsx":"react-jsx","lib":["ES2022","DOM"],"types":["vite/client"]},"include":["src","../../packages/protocol"]}
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM"],
+    "types": ["vite/client"]
+  },
+  "include": ["src", "../../packages/protocol"]
+}

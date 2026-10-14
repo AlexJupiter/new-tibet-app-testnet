@@ -1,1 +1,10 @@
-{"name":"@new-tibet/decoder-compat","version":"1.0.0","private":true,"type":"commonjs","main":"index.cjs","dependencies":{"decode-uri-component-impl":"npm:decode-uri-component@0.5.0"}}
+{
+  "name": "@new-tibet/decoder-compat",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "index.cjs",
+  "dependencies": {
+    "decode-uri-component-impl": "npm:decode-uri-component@0.5.0"
+  }
+}
